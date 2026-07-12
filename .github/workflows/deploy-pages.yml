@@ -3,8 +3,6 @@ name: Publicar Moura e Vasconcelos
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - 'README.md'
   workflow_dispatch:
 
 permissions:
@@ -18,14 +16,15 @@ concurrency:
 
 jobs:
   build:
+    name: Construir e validar site
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Baixar o repositório
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: 20.19.5
           cache: npm
@@ -50,12 +49,10 @@ jobs:
           grep -q 'Moura &amp; Vasconcelos' dist/index.html
           grep -q 'data-prerendered="true"' dist/index.html
 
-      - name: Configurar GitHub Pages
+      - name: Ler configuração do GitHub Pages
         uses: actions/configure-pages@v6
-        with:
-          enablement: true
 
-      - name: Enviar somente a pasta dist
+      - name: Enviar exclusivamente a pasta dist
         uses: actions/upload-pages-artifact@v5
         with:
           path: ./dist
@@ -63,13 +60,17 @@ jobs:
           include-hidden-files: true
 
   deploy:
+    name: Publicar no GitHub Pages
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Publicar no GitHub Pages
+      - name: Publicar site
         id: deployment
         uses: actions/deploy-pages@v5
