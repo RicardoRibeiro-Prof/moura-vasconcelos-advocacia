@@ -1,0 +1,69 @@
+name: Diagnosticar build atual
+
+on:
+  push:
+    paths:
+      - '.github/workflows/diagnose-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.5
+          cache: npm
+
+      - name: Executar diagnóstico e salvar relatório
+        shell: bash
+        run: |
+          set +e
+          : > diagnostic.log
+
+          npm ci >> diagnostic.log 2>&1
+          CI_CODE=$?
+
+          if [ "$CI_CODE" -eq 0 ]; then
+            npm run build >> diagnostic.log 2>&1
+            BUILD_CODE=$?
+          else
+            BUILD_CODE=99
+          fi
+
+          RESULT='SUCESSO'
+          if [ "$CI_CODE" -ne 0 ] || [ "$BUILD_CODE" -ne 0 ]; then
+            RESULT='FALHA'
+          fi
+
+          {
+            echo '# Diagnóstico do build'
+            echo
+            echo "Resultado: **$RESULT**"
+            echo
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Node: $(node --version 2>/dev/null || true)"
+            echo "- npm: $(npm --version 2>/dev/null || true)"
+            echo "- npm ci: código $CI_CODE"
+            echo "- npm run build: código $BUILD_CODE"
+            echo
+            echo '```text'
+            cat diagnostic.log
+            echo '```'
+          } > DIAGNOSTIC-BUILD.md
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add DIAGNOSTIC-BUILD.md
+          git commit -m 'Registra diagnóstico do build' || true
+          git push
+
+          if [ "$RESULT" = 'FALHA' ]; then exit 1; fi
