@@ -1,3 +1,3 @@
 # Moura & Vasconcelos Advocacia
 
-Montagem automática do novo projeto iniciada.
+Solicitação de montagem e publicação do projeto preparada para execução.
