@@ -1,0 +1,25 @@
+name: Iniciar montagem por solicitação
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    if: github.event.issue.title == 'Iniciar projeto Moura & Vasconcelos'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar instalador principal
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl --fail-with-body --request POST \
+            --url "https://api.github.com/repos/${{ github.repository }}/actions/workflows/bootstrap-project.yml/dispatches" \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            --data '{"ref":"main"}'
