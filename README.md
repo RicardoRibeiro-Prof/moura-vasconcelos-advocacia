@@ -1,3 +1,3 @@
 # Moura & Vasconcelos Advocacia
 
-Projeto demonstrativo em construção.
+Montagem automática do novo projeto iniciada.
